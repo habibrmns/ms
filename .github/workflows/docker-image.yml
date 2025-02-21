@@ -24,7 +24,7 @@ jobs:
       - name: bash run
         run: |
           pwd
-          ls
+          ls -la
           
             
       - name: Build and push Docker image
