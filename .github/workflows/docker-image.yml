@@ -23,8 +23,8 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: bash run
         run: |
-            pwd
-            ls
+          pwd
+          ls
           
             
       - name: Build and push Docker image
