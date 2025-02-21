@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Admin Dashboard</h1>
+    <button onclick="window.location.href='products.html'">Back to Products</button>
+    <h2>Add Product</h2>
+    <form id="addProductForm">
+        <input type="text" id="name" placeholder="Name" required>
+        <input type="text" id="description" placeholder="Description" required>
+        <input type="number" id="price" placeholder="Price" required>
+        <input type="number" id="stock" placeholder="Stock" required>
+        <input type="text" id="category" placeholder="Category" required>
+        <button type="submit">Add Product</button>
+    </form>
+    <h2>Upload Image</h2>
+    <form id="uploadImageForm" enctype="multipart/form-data">
+        <input type="number" id="productId" placeholder="Product ID" required>
+        <input type="file" id="image" required>
+        <button type="submit">Upload</button>
+    </form>
+    <h2>Manage Users</h2>
+    <div id="users"></div>
+    <script>
+        const token = localStorage.getItem("token");
+        if (!token) window.location.href = "index.html";
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        if (payload.role !== "admin") window.location.href = "products.html";
+
+        document.getElementById("addProductForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const product = {
+                name: document.getElementById("name").value,
+                description: document.getElementById("description").value,
+                price: parseFloat(document.getElementById("price").value),
+                stock: parseInt(document.getElementById("stock").value),
+                category: document.getElementById("category").value
+            };
+            const response = await fetch("http://localhost:8000/products/products", {
+                method: "POST",
+                headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+                body: JSON.stringify(product)
+            });
+            if (response.ok) alert("Product added");
+        });
+
+        document.getElementById("uploadImageForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const productId = document.getElementById("productId").value;
+            const formData = new FormData();
+            formData.append("file", document.getElementById("image").files[0]);
+            const response = await fetch(`http://localhost:8000/products/products/${productId}/upload-image`, {
+                method: "POST",
+                headers: { "Authorization": `Bearer ${token}` },
+                body: formData
+            });
+            if (response.ok) alert("Image uploaded");
+        });
+
+        async function loadUsers() {
+            const response = await fetch("http://localhost:8000/auth/users", {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            const users = await response.json();
+            const usersDiv = document.getElementById("users");
+            users.forEach(u => {
+                const div = document.createElement("div");
+                div.innerHTML = `${u.name} (${u.mobile_number}) - Role: ${u.role} 
+                    <button onclick="updateRole(${u.id}, 'admin')">Make Admin</button>
+                    <button onclick="updateRole(${u.id}, 'user')">Make User</button>`;
+                usersDiv.appendChild(div);
+            });
+        }
+
+        async function updateRole(userId, role) {
+            await fetch(`http://localhost:8000/auth/users/${userId}`, {
+                method: "PATCH",
+                headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+                body: JSON.stringify({ role })
+            });
+            loadUsers();
+        }
+
+        loadUsers();
+    </script>
+</body>
+</html>

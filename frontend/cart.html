@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Cart</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Your Cart</h1>
+    <button onclick="window.location.href='products.html'">Back to Products</button>
+    <div id="cart"></div>
+    <button onclick="checkout()">Checkout (COD)</button>
+    <script>
+        const token = localStorage.getItem("token");
+        if (!token) window.location.href = "index.html";
+
+        async function loadCart() {
+            const response = await fetch("http://localhost:8000/orders/cart", {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            const cart = await response.json();
+            document.getElementById("cart").innerHTML = cart.map(item => 
+                `Product ID: ${item.product_id}, Quantity: ${item.quantity}`).join("<br>");
+        }
+
+        async function checkout() {
+            const response = await fetch("http://localhost:8000/orders/checkout", {
+                method: "POST",
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            if (response.ok) {
+                alert("Order placed (Cash on Delivery)");
+                window.location.href = "orders.html";
+            } else {
+                alert("Checkout failed");
+            }
+        }
+
+        loadCart();
+    </script>
+</body>
+</html>
